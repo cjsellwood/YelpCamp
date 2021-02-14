@@ -6,7 +6,7 @@ const Campground = require("../models/campground");
 const Review = require("../models/review");
 const { reviewSchema } = require("../schemas");
 
-const validateReview = (err, req, res, next) => {
+const validateReview = (req, res, next) => {
   const { error } = reviewSchema.validate(req.body);
   if (error) {
     const msg = error.details.map((el) => el.message).join(",");
@@ -19,6 +19,7 @@ const validateReview = (err, req, res, next) => {
 // Submit review
 router.post(
   "/",
+  validateReview,
   catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
     const review = new Review(req.body.review);
