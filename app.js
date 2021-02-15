@@ -15,12 +15,15 @@ const LocalStrategy = require("passport-local");
 const User = require("./models/user");
 const mongoSanitize = require("express-mongo-sanitize");
 const helmet = require("helmet");
+const MongoDBStore = require("connect-mongo")(session);
 
 const userRoutes = require("./routes/users");
 const campgroundsRoutes = require("./routes/campgrounds");
 const reviewsRoutes = require("./routes/reviews");
 
-mongoose.connect("mongodb://localhost:27017/yelp-camp", {
+// const dbURL = process.env.DB_URL;
+const dbURL = "mongodb://localhost:27017/yelp-camp";
+mongoose.connect(dbURL, {
   useNewUrlParser: true,
   useCreateIndex: true,
   useUnifiedTopology: true,
@@ -48,7 +51,19 @@ app.use(
 );
 
 app.use(express.static(path.join(__dirname, "public")));
+
+const store = new MongoDBStore({
+  url: dbURL,
+  secret: "thisshouldbeabettersecret",
+  touchAfter: 24 * 3600,
+});
+
+store.on("error", (err) => {
+  console.log("Session store error", err)
+})
+
 const sessionConfig = {
+  store,
   name: "session",
   secret: "thisshouldbeabettersecret",
   resave: false,
@@ -77,8 +92,7 @@ const styleSrcUrls = [
   "https://use.fontawesome.com/",
   "https://cdn.jsdelivr.net",
 ];
-const connectSrcUrls = [
-];
+const connectSrcUrls = [];
 const fontSrcUrls = [];
 app.use(
   helmet.contentSecurityPolicy({
